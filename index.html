@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>משחק 7-5-3</title>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --text-sm:clamp(0.875rem,0.8rem+0.35vw,1rem);
+    --text-base:clamp(1rem,0.95rem+0.25vw,1.125rem);
+    --text-lg:clamp(1.125rem,1rem+0.75vw,1.5rem);
+    --text-xl:clamp(1.5rem,1.2rem+1.25vw,2.25rem);
+    --sp1:.25rem;--sp2:.5rem;--sp3:.75rem;--sp4:1rem;--sp6:1.5rem;--sp8:2rem;--sp10:2.5rem;
+    --r-lg:.75rem;--r-full:9999px;
+    --tr:180ms cubic-bezier(0.16,1,0.3,1);
+    --font:'Satoshi',sans-serif;
+  }
+  :root,[data-theme="light"]{
+    --bg:#f7f6f2;--surf:#f9f8f5;--surf2:#fbfbf9;--bor:#d4d1ca;
+    --txt:#28251d;--mut:#7a7974;--fnt:#bab9b4;
+    --p:#01696f;--ph:#0c4e54;--err:#a12c7b;
+    --c1a:#e06b3a;--c1b:#c84b1e;
+    --c2a:#3a7fd4;--c2b:#1f5faa;
+    --c3a:#7a3aad;--c3b:#5a1f8a;
+    --sh:0 4px 12px oklch(0.2 0.01 80/0.08);
+    --shl:0 12px 32px oklch(0.2 0.01 80/0.12);
+  }
+  [data-theme="dark"]{
+    --bg:#171614;--surf:#1c1b19;--surf2:#201f1d;--bor:#393836;
+    --txt:#cdccca;--mut:#797876;--fnt:#5a5957;
+    --p:#4f98a3;--ph:#227f8b;--err:#d163a7;
+    --c1a:#f08050;--c1b:#e06030;
+    --c2a:#5ba3e8;--c2b:#3a80cc;
+    --c3a:#a06ad6;--c3b:#7a45b8;
+    --sh:0 4px 12px oklch(0 0 0/0.3);
+    --shl:0 12px 32px oklch(0 0 0/0.4);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html{-webkit-font-smoothing:antialiased;}
+  body{min-height:100dvh;font-family:var(--font);font-size:var(--text-base);color:var(--txt);background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:var(--sp4);transition:background var(--tr),color var(--tr);}
+  button{cursor:pointer;border:none;background:none;font:inherit;color:inherit;}
+
+  .header{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:600px;margin-bottom:var(--sp6);}
+  .title{font-size:var(--text-xl);font-weight:700;letter-spacing:-0.02em;}
+  .title span{color:var(--p);}
+  .theme-btn{width:40px;height:40px;border-radius:var(--r-full);border:1px solid var(--bor);display:flex;align-items:center;justify-content:center;background:var(--surf);font-size:1.1rem;transition:all var(--tr);}
+  .theme-btn:hover{border-color:var(--mut);}
+
+  .score-bar{width:100%;max-width:600px;display:flex;justify-content:center;gap:var(--sp8);margin-bottom:var(--sp4);font-size:var(--text-sm);color:var(--mut);}
+  .score-item{display:flex;flex-direction:column;align-items:center;gap:var(--sp1);}
+  .score-num{font-size:var(--text-lg);font-weight:700;color:var(--txt);transition:transform 0.3s cubic-bezier(0.68,-0.55,0.27,1.55);}
+  .score-num.bump{transform:scale(1.5);}
+
+  .diff-bar{width:100%;max-width:600px;display:flex;justify-content:center;gap:var(--sp2);margin-bottom:var(--sp4);}
+  .diff-btn{padding:var(--sp1) var(--sp4);border-radius:var(--r-full);font-size:var(--text-sm);border:1px solid var(--bor);color:var(--mut);transition:all var(--tr);}
+  .diff-btn.active{background:var(--p);color:#fff;border-color:var(--p);}
+  .diff-btn:hover:not(.active){border-color:var(--mut);color:var(--txt);}
+
+  .status-bar{width:100%;max-width:600px;margin-bottom:var(--sp4);background:var(--surf);border:1px solid var(--bor);border-radius:var(--r-lg);padding:var(--sp3) var(--sp6);display:flex;align-items:center;justify-content:space-between;font-size:var(--text-sm);font-weight:500;box-shadow:var(--sh);min-height:44px;}
+  .player-indicator{display:flex;align-items:center;gap:var(--sp2);}
+  .player-dot{width:9px;height:9px;border-radius:var(--r-full);background:var(--p);transition:background 0.4s ease;animation:pulse 1.5s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.75)}}
+
+  .board{width:100%;max-width:600px;background:var(--surf);border:1px solid var(--bor);border-radius:var(--r-lg);padding:var(--sp8);box-shadow:var(--shl);display:flex;flex-direction:column;gap:var(--sp6);}
+  .row-wrap{display:flex;align-items:center;gap:var(--sp4);}
+  .row-label{font-size:var(--text-sm);color:var(--mut);font-weight:700;width:20px;text-align:center;flex-shrink:0;transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1),color 0.3s;}
+  .row-label.changed{transform:scale(1.6);color:var(--txt);}
+  .row-balls{display:flex;flex-wrap:wrap;gap:var(--sp2);flex:1;}
+
+  .ball{
+    width:46px;height:46px;border-radius:var(--r-full);border:2px solid transparent;
+    cursor:pointer;position:relative;overflow:visible;
+    transition:transform 0.2s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.2s ease,filter 0.2s ease,opacity 0.45s ease;
+    animation:ball-in 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+  @keyframes ball-in{from{transform:scale(0) rotate(-90deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}
+  .ball::before{content:"";position:absolute;inset:0;border-radius:var(--r-full);background:radial-gradient(circle at 35% 28%,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.08) 45%,transparent 65%);z-index:2;pointer-events:none;}
+  .ball::after{content:"";position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);width:65%;height:9px;border-radius:var(--r-full);background:oklch(0 0 0/0.22);filter:blur(5px);z-index:-1;transition:all 0.2s ease;pointer-events:none;}
+
+  .row-balls[data-row="0"] .ball{background:radial-gradient(circle at 40% 35%,var(--c1a),var(--c1b));box-shadow:0 0 0 2px oklch(from var(--c1a) l c h/0.35),inset 0 -3px 8px oklch(from var(--c1b) l c h/0.45);}
+  .row-balls[data-row="1"] .ball{background:radial-gradient(circle at 40% 35%,var(--c2a),var(--c2b));box-shadow:0 0 0 2px oklch(from var(--c2a) l c h/0.35),inset 0 -3px 8px oklch(from var(--c2b) l c h/0.45);}
+  .row-balls[data-row="2"] .ball{background:radial-gradient(circle at 40% 35%,var(--c3a),var(--c3b));box-shadow:0 0 0 2px oklch(from var(--c3a) l c h/0.35),inset 0 -3px 8px oklch(from var(--c3b) l c h/0.45);}
+
+  .ball:hover:not(.taken):not(.disabled){transform:translateY(-5px) scale(1.12);filter:brightness(1.2);}
+  .row-balls[data-row="0"] .ball:hover:not(.taken):not(.disabled){box-shadow:0 10px 22px oklch(from var(--c1a) l c h/0.55),0 0 0 2px rgba(255,255,255,0.3);}
+  .row-balls[data-row="1"] .ball:hover:not(.taken):not(.disabled){box-shadow:0 10px 22px oklch(from var(--c2a) l c h/0.55),0 0 0 2px rgba(255,255,255,0.3);}
+  .row-balls[data-row="2"] .ball:hover:not(.taken):not(.disabled){box-shadow:0 10px 22px oklch(from var(--c3a) l c h/0.55),0 0 0 2px rgba(255,255,255,0.3);}
+
+  .ball.selected{transform:translateY(-7px) scale(1.18);}
+  .row-balls[data-row="0"] .ball.selected{box-shadow:0 12px 30px oklch(from var(--c1a) l c h/0.65),0 0 0 3px rgba(255,255,255,0.8);}
+  .row-balls[data-row="1"] .ball.selected{box-shadow:0 12px 30px oklch(from var(--c2a) l c h/0.65),0 0 0 3px rgba(255,255,255,0.8);}
+  .row-balls[data-row="2"] .ball.selected{box-shadow:0 12px 30px oklch(from var(--c3a) l c h/0.65),0 0 0 3px rgba(255,255,255,0.8);}
+
+  .ball.taken{transform:scale(0) rotate(200deg)!important;opacity:0!important;pointer-events:none;transition:transform 0.5s cubic-bezier(0.68,-0.55,0.27,1.55),opacity 0.4s ease!important;}
+  .ball.disabled{cursor:default;filter:brightness(0.72) saturate(0.7);}
+  .ball.danger{animation:danger-pulse 0.65s ease-in-out infinite;}
+  @keyframes danger-pulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.6) drop-shadow(0 0 10px #ff3333);}}
+
+  /* AI hint highlight */
+  .ball.ai-hint{animation:ai-glow 0.5s ease-in-out 3;}
+  @keyframes ai-glow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.8) drop-shadow(0 0 12px #fff);}}
+
+  .action-bar{width:100%;max-width:600px;margin-top:var(--sp4);display:flex;gap:var(--sp3);}
+  .btn{flex:1;padding:var(--sp3) var(--sp6);border-radius:var(--r-lg);font-size:var(--text-sm);font-weight:600;transition:all var(--tr);border:1px solid transparent;}
+  .btn-primary{background:var(--p);color:#fff;}
+  .btn-primary:hover:not(:disabled){background:var(--ph);transform:translateY(-1px);box-shadow:0 4px 14px oklch(from var(--p) l c h/0.4);}
+  .btn-primary:active:not(:disabled){transform:translateY(0);}
+  .btn-primary:disabled{opacity:0.35;cursor:not-allowed;}
+  .btn-ghost{background:transparent;border-color:var(--bor);color:var(--mut);}
+  .btn-ghost:hover{border-color:var(--mut);color:var(--txt);}
+
+  .rules{width:100%;max-width:600px;margin-top:var(--sp4);font-size:var(--text-sm);color:var(--fnt);text-align:center;line-height:1.7;}
+
+  .overlay{position:fixed;inset:0;background:oklch(0 0 0/0.72);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);opacity:0;pointer-events:none;transition:opacity 0.4s ease;z-index:100;}
+  .overlay.show{opacity:1;pointer-events:all;}
+  .overlay-card{background:var(--surf);border:1px solid var(--bor);border-radius:var(--r-lg);padding:var(--sp10);text-align:center;max-width:340px;width:90%;box-shadow:var(--shl);transform:translateY(32px) scale(0.92);transition:transform 0.4s cubic-bezier(0.16,1,0.3,1);}
+  .overlay.show .overlay-card{transform:translateY(0) scale(1);}
+  .overlay-emoji{font-size:4rem;margin-bottom:var(--sp4);display:block;}
+  .overlay.show .overlay-emoji{animation:emoji-pop 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.2s both;}
+  @keyframes emoji-pop{from{transform:scale(0) rotate(-30deg)}to{transform:scale(1) rotate(0)}}
+  .overlay-title{font-size:var(--text-xl);font-weight:700;margin-bottom:var(--sp2);}
+  .overlay-sub{font-size:var(--text-sm);color:var(--mut);margin-bottom:var(--sp8);}
+
+  .thinking{color:var(--fnt);animation:think 0.85s ease-in-out infinite;}
+  @keyframes think{0%,100%{opacity:0.25}50%{opacity:1}}
+  #confetti-canvas{position:fixed;inset:0;pointer-events:none;z-index:200;display:none;}
+  @media(max-width:420px){.ball{width:38px;height:38px;}}
+</style>
+</head>
+<body>
+<canvas id="confetti-canvas"></canvas>
+<div class="header">
+  <div class="title">משחק <span>7-5-3</span></div>
+  <button class="theme-btn" id="theme-btn" aria-label="החלף מצב">☀️</button>
+</div>
+<div class="score-bar">
+  <div class="score-item"><span class="score-num" id="score-you">0</span><span>ניצחונות שלך</span></div>
+  <div class="score-item"><span class="score-num" id="score-ai">0</span><span>ניצחונות מחשב</span></div>
+</div>
+<div class="diff-bar">
+  <button class="diff-btn" data-diff="easy" onclick="setDiff('easy')">קל 😴</button>
+  <button class="diff-btn active" data-diff="medium" onclick="setDiff('medium')">בינוני 🙂</button>
+  <button class="diff-btn" data-diff="hard" onclick="setDiff('hard')">קשה 🤖</button>
+</div>
+<div class="status-bar">
+  <div class="player-indicator">
+    <div class="player-dot" id="dot"></div>
+    <span id="status">תורך — בחר כדורים מאותה שורה</span>
+  </div>
+  <span id="sel-count" style="color:var(--fnt)"></span>
+</div>
+<div class="board">
+  <div class="row-wrap"><div class="row-label" id="lbl-0">7</div><div class="row-balls" data-row="0" id="row-0"></div></div>
+  <div class="row-wrap"><div class="row-label" id="lbl-1">5</div><div class="row-balls" data-row="1" id="row-1"></div></div>
+  <div class="row-wrap"><div class="row-label" id="lbl-2">3</div><div class="row-balls" data-row="2" id="row-2"></div></div>
+</div>
+<div class="action-bar">
+  <button class="btn btn-ghost" onclick="resetGame()">משחק חדש</button>
+  <button class="btn btn-primary" id="confirm-btn" onclick="confirmMove()" disabled>אשר בחירה</button>
+</div>
+<div class="rules">
+  בכל תור, בחר אחד או יותר כדורים מ<strong>שורה אחת בלבד</strong>.<br>
+  מי שנאלץ לקחת את הכדור <strong>האחרון</strong> — <strong>מפסיד</strong>.
+</div>
+<div class="overlay" id="overlay">
+  <div class="overlay-card">
+    <span class="overlay-emoji" id="ov-emoji">🎉</span>
+    <div class="overlay-title" id="ov-title">ניצחת!</div>
+    <div class="overlay-sub" id="ov-sub"></div>
+    <button class="btn btn-primary" onclick="resetGame()" style="width:100%">שחק שוב</button>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   MISÈRE NIM — מי שלוקח את הכדור האחרון מפסיד
+
+   תיאוריה מושלמת:
+   • אם לכל השורות יש ≤1 כדורים: השאר מספר אי-זוגי של שורות עם 1
+   • אחרת: שחק כמו Nim רגיל (XOR), אבל כשיש שורה אחת גדולה + שורות של 1:
+       - אם מספר שורות-1 הוא זוגי → קח מהשורה הגדולה עד שישאר 1
+       - אם מספר שורות-1 הוא אי-זוגי → קח הכל מהשורה הגדולה
+   ========================================================= */
+
+let rows=[7,5,3], sel={row:-1,balls:[]}, isPlayer=true, over=false;
+let scores={you:0,ai:0}, difficulty='medium';
+
+// ---- Difficulty ----
+function setDiff(d){ difficulty=d; document.querySelectorAll('.diff-btn').forEach(b=>b.classList.toggle('active',b.dataset.diff===d)); resetGame(); }
+
+// ---- Board ----
+function initBoard(){
+  rows=[7,5,3]; sel={row:-1,balls:[]}; isPlayer=true; over=false;
+  document.getElementById('confirm-btn').disabled=true;
+  document.getElementById('sel-count').textContent='';
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('confetti-canvas').style.display='none';
+  [0,1,2].forEach(r=>{
+    document.getElementById('lbl-'+r).textContent=[7,5,3][r];
+    const c=document.getElementById('row-'+r); c.innerHTML='';
+    for(let b=0;b<[7,5,3][r];b++){
+      const el=document.createElement('button');
+      el.className='ball'; el.style.animationDelay=(b*45)+'ms';
+      el.dataset.row=r; el.dataset.idx=b;
+      el.setAttribute('aria-label','כדור '+(b+1));
+      el.addEventListener('click',()=>onBall(r,b));
+      c.appendChild(el);
+    }
+  });
+  setStatus('תורך — בחר כדורים מאותה שורה'); setDot(true);
+}
+
+function onBall(r,b){
+  if(!isPlayer||over) return;
+  const el=ballEl(r,b);
+  if(!el||el.classList.contains('taken')) return;
+  if(sel.row!==-1&&sel.row!==r) clearSel();
+  sel.row=r;
+  const i=sel.balls.indexOf(b);
+  if(i>=0) sel.balls.splice(i,1); else sel.balls.push(b);
+  if(!sel.balls.length) sel.row=-1;
+  renderSel();
+  const n=sel.balls.length;
+  document.getElementById('confirm-btn').disabled=n===0;
+  document.getElementById('sel-count').textContent=n?'נבחרו '+n+(n===1?' כדור':' כדורים'):'';
+}
+function ballEl(r,b){ return document.querySelector('.ball[data-row="'+r+'"][data-idx="'+b+'"]'); }
+function clearSel(){ document.querySelectorAll('.ball.selected').forEach(b=>b.classList.remove('selected')); sel={row:-1,balls:[]}; }
+function renderSel(){ document.querySelectorAll('.ball').forEach(b=>b.classList.remove('selected')); sel.balls.forEach(idx=>{ const b=ballEl(sel.row,idx); if(b) b.classList.add('selected'); }); }
+
+function confirmMove(){
+  if(!sel.balls.length||!isPlayer||over) return;
+  applyMove(sel.row,sel.balls.length); clearSel();
+  document.getElementById('confirm-btn').disabled=true;
+  document.getElementById('sel-count').textContent='';
+  if(checkOver(true)) return;
+  isPlayer=false; setDot(false);
+  setStatus('<span class="thinking">המחשב חושב…</span>');
+  document.querySelectorAll('.ball').forEach(b=>b.classList.add('disabled'));
+  const delay={easy:500,medium:900,hard:1400}[difficulty];
+  setTimeout(aiMove,delay);
+}
+
+function applyMove(r,n){
+  rows[r]-=n;
+  document.getElementById('lbl-'+r).textContent=rows[r];
+  const lbl=document.getElementById('lbl-'+r);
+  lbl.classList.add('changed'); setTimeout(()=>lbl.classList.remove('changed'),400);
+  const vis=Array.from(document.querySelectorAll('.ball[data-row="'+r+'"]:not(.taken)'));
+  vis.slice(-n).forEach((b,i)=>setTimeout(()=>b.classList.add('taken'),i*110));
+  setTimeout(updateDanger, n*110+200);
+}
+
+function updateDanger(){
+  document.querySelectorAll('.ball').forEach(b=>b.classList.remove('danger'));
+  if(rows.reduce((a,b)=>a+b,0)===1){
+    const last=document.querySelector('.ball:not(.taken)');
+    if(last) last.classList.add('danger');
+  }
+}
+
+function checkOver(playerJustMoved){
+  const tot=rows.reduce((a,b)=>a+b,0);
+  if(tot===0){ setTimeout(()=>endGame(!playerJustMoved),600); return true; }
+  if(tot===1){ updateDanger(); setTimeout(()=>endGame(playerJustMoved),600); return true; }
+  return false;
+}
+
+/* =========================================================
+   AI ENGINE — Misère Nim אופטימלי מלא
+   ========================================================= */
+function xorAll(){ return rows.reduce((a,b)=>a^b,0); }
+function tot(){ return rows.reduce((a,b)=>a+b,0); }
+function nonEmpty(){ return rows.map((r,i)=>({r,i})).filter(x=>x.r>0); }
+
+function misereOptimal(){
+  const ne=nonEmpty();
+  const t=tot();
+
+  // מקרה: כל שורות ≤ 1 (endgame)
+  if(rows.every(r=>r<=1)){
+    // ספור כמה 1ות יש. רוצים להשאיר אי-זוגי לאויב.
+    const ones=rows.filter(r=>r===1).length;
+    // ones = מספר שורות עם 1. אחרי שנקח 1, יישארו ones-1.
+    // רוצים ones-1 להיות זוגי (כך לאויב יישאר זוגי ואחד יהיה האחרון).
+    // אם ones אי-זוגי → ones-1 זוגי → טוב!
+    // אם ones זוגי → ones-1 אי-זוגי → לאויב יישאר אי-זוגי → הוא מנצח. אנחנו מפסידים ממילא.
+    return ne.length>0 ? {row:ne[0].i, take:1} : null;
+  }
+
+  const bigRows=ne.filter(x=>x.r>1);
+  const ones=ne.filter(x=>x.r===1).length;
+
+  // מקרה קריטי: שורה גדולה אחת + שורות של 1
+  if(bigRows.length===1){
+    const big=bigRows[0];
+    // ones זוגי → קח עד שישאר 1 בשורה הגדולה
+    // ones אי-זוגי → קח הכל מהשורה הגדולה (כדי שישאר רק ones שורות של 1, שהוא אי-זוגי)
+    if(ones%2===0){
+      return {row:big.i, take:big.r-1}; // השאר 1
+    } else {
+      return {row:big.i, take:big.r};   // קח הכל
+    }
+  }
+
+  // מקרה כללי: XOR Nim רגיל
+  const xor=xorAll();
+  if(xor!==0){
+    for(let r=0;r<3;r++){
+      const target=rows[r]^xor;
+      if(target<rows[r]&&rows[r]>0){
+        let take=rows[r]-target;
+        // בדוק האם אחרי המהלך נכנסים ל-endgame (כל שורות ≤ 1)
+        const sim=rows.map((v,i)=>i===r?target:v);
+        if(sim.every(v=>v<=1)){
+          const onesAfter=sim.filter(v=>v===1).length;
+          // רוצים onesAfter אי-זוגי (הם יישארו עם זוגי ← ינצחו)
+          // לא, רוצים שהאויב יישאר עם מספר זוגי של 1ות:
+          // onesAfter = כמה 1ות האויב יתמודד איתם → צריך להיות זוגי
+          if(onesAfter%2===1){
+            // נסה להתאים
+            if(target>0&&rows[r]>take+1){ take++; }
+            else if(target-1>=0){ take=rows[r]-(target-1); }
+          }
+          take=Math.max(1,Math.min(take,rows[r]));
+        }
+        return {row:r, take};
+      }
+    }
+  }
+
+  // XOR=0 → אנחנו בעמדת מפסיד, עשה מהלך שלא ייתן מתנה
+  // אל תשאיר tot=1 לאויב
+  const biggest=ne.slice().sort((a,b)=>b.r-a.r)[0];
+  if(t-1===1){ // לקיחת 1 תשאיר 1 לאויב → הוא ינצח
+    if(biggest.r>1) return {row:biggest.i, take:2}; // קח 2
+  }
+  return {row:biggest.i, take:1};
+}
+
+function aiMove(){
+  if(tot()===1){
+    // חייב לקחת → מפסיד
+    const r=rows.findIndex(x=>x>0);
+    applyMove(r,1);
+    setTimeout(()=>endGame(true),700);
+    return;
+  }
+
+  let move=null;
+  const rand=()=>{ const ne=nonEmpty(); const p=ne[Math.floor(Math.random()*ne.length)]; return {row:p.i,take:Math.floor(Math.random()*p.r)+1}; };
+
+  if(difficulty==='easy'){
+    // רק 10% אופטימלי, 90% מהלך אקראי עם הגבלה — תמיד לקח 1
+    if(Math.random()<0.10) move=misereOptimal();
+    else { const ne=nonEmpty(); const p=ne[Math.floor(Math.random()*ne.length)]; move={row:p.i,take:1}; }
+  } else if(difficulty==='medium'){
+    // 60% אופטימלי, 40% אקראי
+    move=Math.random()<0.60 ? misereOptimal() : rand();
+  } else {
+    // 100% אופטימלי
+    move=misereOptimal();
+  }
+
+  if(!move) move=rand();
+  move.take=Math.max(1,Math.min(move.take,rows[move.row]));
+
+  // Flash AI balls before taking (only hard mode — show which balls AI is about to take)
+  if(difficulty==='hard'){
+    const vis=Array.from(document.querySelectorAll('.ball[data-row="'+move.row+'"]:not(.taken)'));
+    vis.slice(-move.take).forEach(b=>b.classList.add('ai-hint'));
+    setTimeout(()=>{ applyMove(move.row,move.take); finishAI(); },600);
+  } else {
+    applyMove(move.row,move.take); finishAI();
+  }
+}
+
+function finishAI(){
+  setTimeout(()=>{
+    if(checkOver(false)) return;
+    isPlayer=true; setDot(true);
+    document.querySelectorAll('.ball:not(.taken)').forEach(b=>{ b.classList.remove('disabled'); b.classList.remove('ai-hint'); });
+    setStatus('תורך — בחר כדורים מאותה שורה');
+  },700);
+}
+
+function endGame(youWon){
+  over=true;
+  const sid=youWon?'score-you':'score-ai';
+  if(youWon){
+    scores.you++; document.getElementById('score-you').textContent=scores.you;
+    document.getElementById('ov-emoji').textContent='🎉';
+    document.getElementById('ov-title').textContent='ניצחת!';
+    const m=['כל הכבוד — שיחקת מצוין!','מרשים! שלטת במשחק 💪','אחלה מהלכים! 🔥'];
+    document.getElementById('ov-sub').textContent=m[scores.you%m.length];
+    launchConfetti();
+  } else {
+    scores.ai++; document.getElementById('score-ai').textContent=scores.ai;
+    document.getElementById('ov-emoji').textContent='🤖';
+    document.getElementById('ov-title').textContent='המחשב ניצח';
+    const m={
+      easy:['גם ברמה קלה קשה לפעמים 😅','נסה שוב!','המחשב התמזל מזל הפעם...'],
+      medium:['נסה לחשוב כמה תורות קדימה 💡','שנה אסטרטגיה!','עוד נסיון?'],
+      hard:['הרמה הקשה = מתמטיקה טהורה 🧠','יש נוסחת XOR לנצח — תמצא אותה!','כמעט... נסה שוב!']
+    };
+    const arr=m[difficulty]; document.getElementById('ov-sub').textContent=arr[scores.ai%arr.length];
+  }
+  const sn=document.getElementById(sid);
+  sn.classList.add('bump'); setTimeout(()=>sn.classList.remove('bump'),400);
+  setTimeout(()=>document.getElementById('overlay').classList.add('show'),150);
+}
+
+function launchConfetti(){
+  const cv=document.getElementById('confetti-canvas');
+  cv.style.display='block'; cv.width=window.innerWidth; cv.height=window.innerHeight;
+  const ctx=cv.getContext('2d');
+  const cols=['#f08050','#5ba3e8','#a06ad6','#4f98a3','#e8c84a','#e06b9a','#6daa45'];
+  const ps=Array.from({length:190},()=>({x:Math.random()*cv.width,y:-30,w:7+Math.random()*10,h:4+Math.random()*6,c:cols[Math.floor(Math.random()*cols.length)],rot:Math.random()*360,rs:(Math.random()-0.5)*9,vx:(Math.random()-0.5)*7,vy:2+Math.random()*5,a:1}));
+  let fr=0;
+  (function draw(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    ps.forEach(p=>{ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot*Math.PI/180);ctx.globalAlpha=p.a;ctx.fillStyle=p.c;ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore();p.x+=p.vx;p.y+=p.vy;p.rot+=p.rs;p.vy+=0.13;if(fr>90)p.a-=0.013;});
+    fr++; if(fr<160) requestAnimationFrame(draw); else cv.style.display='none';
+  })();
+}
+
+function setStatus(h){document.getElementById('status').innerHTML=h;}
+function setDot(p){document.getElementById('dot').style.background=p?'var(--p)':'var(--err)';}
+function resetGame(){initBoard();}
+
+document.getElementById('theme-btn').addEventListener('click',function(){
+  const h=document.documentElement,d=h.getAttribute('data-theme')==='dark';
+  h.setAttribute('data-theme',d?'light':'dark'); this.textContent=d?'🌙':'☀️';
+});
+
+initBoard();
+</script>
+</body>
+</html>
